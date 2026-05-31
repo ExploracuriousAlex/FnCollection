@@ -131,7 +131,7 @@ FortniteCollection/
 ├── epic_login.ps1                        ← helper to get/set EPIC_REFRESH_TOKEN
 ├── get_data.py                           ← inventory importer (Epic MCP)
 ├── missing_items.py                      ← generates missing_items.txt
-├── squads.py                             ← generates squad.txt
+├── squads.py                             ← generates squads.txt
 ├── state.py                              ← collection.json read/write
 ├── data/
 │   └── collection.json                   ← created automatically (internal)
@@ -212,7 +212,7 @@ The importer:
 The scripts now use fixed output names and harmonized backup naming:
 
 - `missing_items.py` writes `missing_items.txt`
-- `squads.py` writes `squad.txt`
+- `squads.py` writes `squads.txt`
 - Before overwrite, backups are created in `backups/` as `<name>.backup_YYYYmmdd_HHMMSS<ext>`
   - `backups/missing_items.backup_YYYYmmdd_HHMMSS.txt`
   - `backups/squad.backup_YYYYmmdd_HHMMSS.txt`
@@ -244,7 +244,7 @@ uv run python squads.py
 uv run python squads.py --lang de
 ```
 
-Output: `squad.txt` — two suggestions (potential mode and current mode) with full squad assignments.
+Output: `squads.txt` — two suggestions (potential mode and current mode) with full squad assignments.
 
 The `--lang` option translates squad names, personalities, set bonuses, and rarity labels. Supported values match the exported localization sub-folders. Default: `en`.
 

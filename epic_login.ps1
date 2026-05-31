@@ -88,4 +88,4 @@ Write-Host "EPIC_REFRESH_TOKEN has been set in the current terminal." -Foregroun
 Write-Host "You can now run:" -ForegroundColor Green
 Write-Host "  uv run .\get_data.py" -ForegroundColor Green
 Write-Host "  uv run .\missing_items.py" -ForegroundColor Green
-Write-Host "  uv run .\sqads.py" -ForegroundColor Green
+Write-Host "  uv run .\squads.py" -ForegroundColor Green
