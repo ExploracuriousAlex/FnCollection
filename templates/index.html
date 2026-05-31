@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="de" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STW Collection Book</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">⚡ STW Collection</div>
+
+    <div class="lang-switcher">
+      {% for code, label in available_langs %}
+        <a href="{{ url_for('set_lang', lang_code=code) }}"
+           class="lang-btn {{ 'active' if code == current_lang else '' }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="accordion accordion-flush" id="catAccordion">
+        {% for cat in data.categories %}
+          {% if cat.pages %}
+          {% set is_active_cat = current_page and current_page.category_id == cat.id %}
+          <div class="accordion-item border-0 sidebar-cat-item">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button sidebar-cat-btn {{ '' if is_active_cat else 'collapsed' }}"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#cat{{ loop.index }}"
+                aria-expanded="{{ 'true' if is_active_cat else 'false' }}"
+              >
+                {{ cat.name }}
+                <span class="cat-count ms-auto me-2">{{ cat.pages | sum(attribute='slot_count') }}</span>
+              </button>
+            </h2>
+            <div
+              id="cat{{ loop.index }}"
+              class="accordion-collapse collapse {{ 'show' if is_active_cat else '' }}"
+              data-bs-parent="#catAccordion"
+            >
+              <div class="accordion-body p-0">
+                {% for page in cat.pages %}
+                  <a
+                    href="{{ url_for('page_detail', page_id=page.id) }}"
+                    class="sidebar-page-link {{ 'active' if current_page and current_page.id == page.id else '' }}"
+                    data-page-id="{{ page.id }}"
+                  >{{ page.name }}<span class="page-count ms-auto">{{ page.slot_count }}</span></a>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ── Main Content ─────────────────────────────────────── -->
+  <main class="main-content">
+    {% if current_page %}
+
+      <div class="page-header">
+        <div class="d-flex align-items-start gap-3 flex-wrap">
+          <h2 class="page-title mb-0">{{ current_page.name }}</h2>
+          <div class="filter-btns ms-auto d-flex flex-column gap-2 align-items-end">
+            <div class="d-flex gap-2">
+              <input id="search-slots" class="search-input" type="search" placeholder="Search…" autocomplete="off">
+            </div>
+            <div class="d-flex gap-2">
+              <button id="filter-col" class="filter-btn" type="button" title="Show only items not yet in the Collection Book">
+                📖 Not in Collection Book
+              </button>
+              <button id="filter-max" class="filter-btn" type="button" title="Show only items not at max strength">
+                ⭐ Not Max Strength
+              </button>
+              <button id="filter-inv" class="filter-btn" type="button" title="Show only items missing from inventory">
+                📰 Not in Inventory
+              </button>
+              <button id="filter-dup" class="filter-btn" type="button" title="Show only items with 2 or more in inventory">
+                📦 Duplicates
+              </button>
+            </div>
+            <div class="d-flex gap-1">
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-c"   title="Toggle Common items">Common</button>
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-uc"  title="Toggle Uncommon items">Uncommon</button>
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-r"   title="Toggle Rare items">Rare</button>
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-vr"  title="Toggle Epic items">Epic</button>
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-sr"  title="Toggle Legendary items">Legendary</button>
+              <button class="filter-btn rarity-filter active" type="button" data-rarity="rarity-myt" title="Toggle Mythic items">Mythic</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if current_page.sections %}
+        <div class="accordion sections-accordion" id="sectionsAccordion">
+          {% for section in current_page.sections %}
+            {% set sec_id = "sec" ~ loop.index %}
+            <div class="accordion-item section-item">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button section-btn"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#{{ sec_id }}"
+                  aria-expanded="true"
+                >
+                  {{ section.name }}
+                  <span class="badge slot-count ms-2">{{ section.slots | length }}</span>
+                </button>
+              </h2>
+              <div
+                id="{{ sec_id }}"
+                class="accordion-collapse collapse show"
+              >
+                <div class="accordion-body">
+                  {% if section.slots and section.slots[0].is_survivor_slot %}
+                    {# Survivor-section: portrait × set-bonus table #}
+                    <div class="row row-cols-1 row-cols-sm-2 {{ 'row-cols-lg-2' if section.slots[0].wide_table else 'row-cols-lg-3' }} g-2">
+                      {% for slot in section.slots %}
+                        <div class="col">
+                          <div class="item-card {{ slot.rarity_css }} survivor-slot-card">
+                            {% if slot.icon_url %}
+                              <img src="{{ slot.icon_url }}" class="item-icon" alt="" loading="lazy">
+                            {% endif %}
+                            <div class="item-name">
+                              {% if slot.personality_icon_url %}
+                                <img src="{{ slot.personality_icon_url }}" class="personality-badge-img" alt="" loading="lazy">
+                              {% endif %}
+                              {{ slot.name }}
+                            </div>
+                            {% if slot.rarity_label and slot.rarity_label != slot.name %}
+                              <span class="rarity-badge {{ slot.rarity_css }}">{{ slot.rarity_label }}</span>
+                            {% endif %}
+                            <div class="item-checks" style="margin-bottom:0.4rem">
+                              <label class="item-check" title="In Collection Book">
+                                <input type="checkbox" class="check-col" data-id="{{ slot.slot_id }}" disabled>
+                                <span class="check-icon">📖</span>
+                              </label>
+                              <label class="item-check item-check-max" title="Max Strength in Collection Book">
+                                <input type="checkbox" class="check-col-max" data-id="{{ slot.slot_id }}" disabled>
+                                <span class="check-icon">⭐</span>
+                              </label>
+                            </div>
+                            <table class="survivor-variant-table">
+                              <thead>
+                                <tr>
+                                  <th class="survivor-bonus-th"></th>
+                                  {% for portrait in slot.portraits %}
+                                    <th class="survivor-portrait-th" title="{{ portrait.label if portrait.label is defined else portrait.key }}">
+                                      {% if portrait.icon_url %}
+                                        <img src="{{ portrait.icon_url }}" class="{% if portrait.label is defined %}personality-col-img{% else %}survivor-portrait-img{% endif %}" alt="{{ portrait.label if portrait.label is defined else portrait.key }}" loading="lazy">
+                                      {% else %}
+                                        {{ portrait.key }}
+                                      {% endif %}
+                                    </th>
+                                  {% endfor %}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for i in range(slot.set_bonus_labels | length) %}
+                                  <tr>
+                                    <td class="survivor-bonus-cell">
+                                      {% if slot.set_bonus_icons[i] %}
+                                        <img src="{{ slot.set_bonus_icons[i] }}" class="survivor-setbonus-img" alt="" loading="lazy">
+                                      {% endif %}
+                                      {{ slot.set_bonus_labels[i] }}
+                                    </td>
+                                    {% for portrait in slot.portraits %}
+                                      <td class="survivor-check-cell">
+                                        <div class="inv-count inv-count-cell" data-id="{{ portrait.set_bonuses[i].slot_id }}" title="">
+                                          <span class="qty-val">0</span>
+                                        </div>
+                                      </td>
+                                    {% endfor %}
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% elif section.slots and section.slots[0].is_lead_slot %}
+                    {# Lead-section: 1-2-4 grid, each card has a personality×gender table #}
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-2">
+                      {% for slot in section.slots %}
+                        <div class="col">
+                          <div class="item-card {{ slot.rarity_css }} lead-slot-card">
+                            <div class="lead-portraits">
+                              {% for gender in slot.genders %}
+                                {% if gender.icon_url %}
+                                  <img src="{{ gender.icon_url }}" class="lead-portrait-img" alt="{{ gender.key }}" loading="lazy">
+                                {% endif %}
+                              {% endfor %}
+                            </div>
+                            <div class="item-name">{{ slot.name }}</div>
+                            {% if slot.rarity_label and slot.rarity_label != slot.name %}
+                              <span class="rarity-badge {{ slot.rarity_css }}">{{ slot.rarity_label }}</span>
+                            {% endif %}
+                            <div class="item-checks" style="margin-bottom:0.4rem">
+                              <label class="item-check" title="In Collection Book">
+                                <input type="checkbox" class="check-col" data-id="{{ slot.slot_id }}" disabled>
+                                <span class="check-icon">📖</span>
+                              </label>
+                              <label class="item-check item-check-max" title="Max Strength in Collection Book">
+                                <input type="checkbox" class="check-col-max" data-id="{{ slot.slot_id }}" disabled>
+                                <span class="check-icon">⭐</span>
+                              </label>
+                            </div>
+                            <table class="lead-variant-table">
+                              <thead>
+                                <tr>
+                                  <th></th>
+                                  {% for gender in slot.genders %}
+                                    <th>{{ "♂" if gender.key == "M" else "♀" }}</th>
+                                  {% endfor %}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for i in range(slot.genders[0].personalities | length) %}
+                                  <tr>
+                                    <td class="lead-personality-cell">
+                                      {% if slot.genders[0].personalities[i].personality_icon_url %}
+                                        <img src="{{ slot.genders[0].personalities[i].personality_icon_url }}" class="personality-badge-img" alt="" loading="lazy">
+                                      {% endif %}
+                                      {{ slot.genders[0].personalities[i].personality }}
+                                    </td>
+                                    {% for gender in slot.genders %}
+                                      <td class="lead-check-cell">
+                                        <div class="inv-count inv-count-cell" data-id="{{ gender.personalities[i].slot_id }}" title="">
+                                          <span class="qty-val">0</span>
+                                        </div>
+                                      </td>
+                                    {% endfor %}
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 g-2">
+                    {% for slot in section.slots %}
+                      <div class="col">
+                        <div class="item-card {{ slot.rarity_css }}">
+                          {% if slot.icon_url %}
+                            <img src="{{ slot.icon_url }}" class="item-icon" alt="" loading="lazy">
+                          {% endif %}
+                          <div class="item-name">{{ slot.name }}</div>
+                          {% if slot.rarity_label and slot.rarity_label != slot.name %}
+                            <span class="rarity-badge {{ slot.rarity_css }}">{{ slot.rarity_label }}</span>
+                          {% endif %}
+                          {% if slot.personality %}
+                            <div class="lead-meta">
+                              {% if slot.personality_icon_url %}
+                                <img src="{{ slot.personality_icon_url }}" class="personality-badge-img" alt="" loading="lazy">
+                              {% endif %}
+                              <span class="lead-personality-badge">{{ slot.personality }}</span>
+                            </div>
+                          {% endif %}
+                          <div class="item-checks">
+                            <div class="inv-count" data-id="{{ slot.slot_id }}" title="">
+                              <span class="qty-val">0</span>
+                            </div>
+                            <label class="item-check" title="In Collection Book">
+                              <input type="checkbox" class="check-col" data-id="{{ slot.slot_id }}" disabled>
+                              <span class="check-icon">📖</span>
+                            </label>
+                            <label class="item-check item-check-max" title="Max Strength in Collection Book">
+                              <input type="checkbox" class="check-col-max" data-id="{{ slot.slot_id }}" disabled>
+                              <span class="check-icon">⭐</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+    {% endif %}
+  </main>
+
+</div>
+
+<script id="page-slots-json" type="application/json">{{ page_slot_index | tojson }}</script>
+<script id="current-lang-json" type="application/json">{{ current_lang | tojson }}</script>
+<script id="material-labels-json" type="application/json">{{ material_labels | tojson }}</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  let _state = { inv: {}, col: {}, col_max: {}, inv_details: {} };
+  let _filterCol = localStorage.getItem('filter-col') === '1';
+  let _filterMax = localStorage.getItem('filter-max') === '1';
+  let _filterInv = localStorage.getItem('filter-inv') === '1';
+  let _filterDup = localStorage.getItem('filter-dup') === '1';
+  let _hiddenRarities = new Set(JSON.parse(localStorage.getItem('filter-hidden-rarities') || '[]'));
+  let _searchQuery = localStorage.getItem('filter-search') || '';
+
+  const _pageSlots = JSON.parse(document.getElementById('page-slots-json').textContent || '{}');
+  const _lang = JSON.parse(document.getElementById('current-lang-json').textContent || '"en"');
+  const _materialLabels = JSON.parse(document.getElementById('material-labels-json').textContent || '{}');
+
+  const _uiText = {
+    de: { amount: 'Menge', pl: 'PL' },
+    en: { amount: 'Amount', pl: 'PL' }
+  };
+
+  function t(key) {
+    const table = _uiText[_lang] || _uiText.en;
+    return table[key] || key;
+  }
+
+  function localizeMaterial(name) {
+    return _materialLabels[name] || name;
+  }
+
+  // --- Filter helpers ---
+
+  function isInCollection(card) {
+    const cb = card.querySelector('.check-col');
+    if (!cb) return false;
+    if (_state.col[cb.dataset.id]) return true;
+    const counts = card.querySelectorAll('.inv-count');
+    for (const c of counts) {
+      if (_state.col[c.dataset.id]) return true;
+    }
+    return false;
+  }
+
+  function isFullyInInventory(card) {
+    const counts = card.querySelectorAll('.inv-count');
+    if (!counts.length) return false;
+    for (const c of counts) {
+      if ((_state.inv[c.dataset.id] || 0) <= 0) return false;
+    }
+    return true;
+  }
+
+  function hasDuplicates(card) {
+    const counts = card.querySelectorAll('.inv-count');
+    for (const c of counts) {
+      if ((_state.inv[c.dataset.id] || 0) >= 2) return true;
+    }
+    return false;
+  }
+
+  function isMaxInCollection(card) {
+    const cb = card.querySelector('.check-col-max');
+    if (!cb) return false;
+    if (_state.col_max[cb.dataset.id]) return true;
+    const counts = card.querySelectorAll('.inv-count');
+    for (const c of counts) {
+      if (_state.col_max[c.dataset.id]) return true;
+    }
+    return false;
+  }
+
+  function formatInvDetails(slotId, count) {
+    const details = _state.inv_details && _state.inv_details[slotId];
+    if (!Array.isArray(details) || !details.length) {
+      return count > 0 ? `${t('amount')}: ${count}` : '';
+    }
+    return details
+      .map(d => {
+        const chunks = [`${d.count || 1}x`];
+        if (d.material) chunks.push(localizeMaterial(d.material));
+        if (typeof d.pl === 'number') chunks.push(`${t('pl')} ${d.pl}`);
+        return chunks.join(' ');
+      })
+      .join('\n');
+  }
+
+  function applyFilters() {
+    const sections = document.querySelectorAll('.section-item');
+    sections.forEach(section => {
+      const cols = section.querySelectorAll('.col');
+      let anyVisible = false;
+      cols.forEach(col => {
+        const card = col.querySelector('.item-card');
+        let hide = false;
+        if (_filterCol && card && isInCollection(card)) hide = true;
+        if (_filterMax && card && isMaxInCollection(card)) hide = true;
+        if (_filterInv && card && isFullyInInventory(card)) hide = true;
+        if (_filterDup && card && !hasDuplicates(card)) hide = true;
+        if (!hide && card) {
+          for (const rc of _hiddenRarities) {
+            if (card.classList.contains(rc)) { hide = true; break; }
+          }
+        }
+        if (!hide && _searchQuery) {
+          const nameEl = card ? card.querySelector('.item-name') : null;
+          const nameText = nameEl ? nameEl.textContent.toLowerCase() : '';
+          if (!nameText.includes(_searchQuery)) hide = true;
+        }
+        col.style.display = hide ? 'none' : '';
+        if (!hide) anyVisible = true;
+      });
+      // For non-grid sections (lead/survivor use rows directly), also check .item-card without .col
+      if (!cols.length) anyVisible = true;
+      section.style.display = anyVisible ? '' : 'none';
+    });
+
+    // Update sidebar page link visibility and counts
+    document.querySelectorAll('.sidebar-page-link[data-page-id]').forEach(link => {
+      const pageId = link.dataset.pageId;
+      const slots = _pageSlots[pageId] || [];
+      let visibleCount = 0;
+      for (const slot of slots) {
+        let hide = false;
+        if (_filterCol) {
+          const inCollection = _state.col[slot.col] || slot.inv.some(id => !!_state.col[id]);
+          if (inCollection) hide = true;
+        }
+        if (_filterMax) {
+          const isMax = _state.col_max[slot.col] || slot.inv.some(id => !!_state.col_max[id]);
+          if (isMax) hide = true;
+        }
+        if (_filterInv) {
+          const allCovered = slot.inv.every(id => (_state.inv[id] || 0) > 0);
+          if (allCovered) hide = true;
+        }
+        if (_filterDup) {
+          const anyDuplicate = slot.inv.some(id => (_state.inv[id] || 0) >= 2);
+          if (!anyDuplicate) hide = true;
+        }
+        if (!hide && slot.rarity && _hiddenRarities.has(slot.rarity)) hide = true;
+        if (!hide && _searchQuery && !slot.name.includes(_searchQuery)) hide = true;
+        if (!hide) visibleCount++;
+      }
+      const hasSlots = slots.length > 0;
+      link.style.display = (!hasSlots || visibleCount > 0) ? '' : 'none';
+      const badge = link.querySelector('.page-count');
+      if (badge && hasSlots) badge.textContent = visibleCount;
+    });
+
+    // Update sidebar category visibility and counts
+    document.querySelectorAll('.sidebar-cat-item').forEach(catItem => {
+      const links = catItem.querySelectorAll('.sidebar-page-link[data-page-id]');
+      let catVisible = false;
+      let catCount = 0;
+      links.forEach(l => {
+        if (l.style.display !== 'none') {
+          catVisible = true;
+          const badge = l.querySelector('.page-count');
+          catCount += badge ? (parseInt(badge.textContent) || 0) : 0;
+        }
+      });
+      if (!links.length) catVisible = true;
+      catItem.style.display = catVisible ? '' : 'none';
+      const catBadge = catItem.querySelector('.cat-count');
+      if (catBadge) catBadge.textContent = catCount;
+    });
+  }
+
+  function applyState() {
+    // Read-only inventory counts
+    document.querySelectorAll('.inv-count').forEach(el => {
+      const id = el.dataset.id;
+      const count = (_state.inv[id] || 0);
+      el.querySelector('.qty-val').textContent = count;
+      el.classList.toggle('has-qty', count > 0);
+      el.title = formatInvDetails(id, count);
+    });
+    // Collection checkboxes (col)
+    document.querySelectorAll('.check-col').forEach(cb => {
+      let checked = !!_state.col[cb.dataset.id];
+      if (!checked) {
+        const card = cb.closest('.item-card');
+        const counts = card ? card.querySelectorAll('.inv-count') : [];
+        for (const c of counts) {
+          if (_state.col[c.dataset.id]) {
+            checked = true;
+            break;
+          }
+        }
+      }
+      cb.checked = checked;
+      cb.closest('.item-check').classList.toggle('is-checked', checked);
+    });
+    // Max-strength checkboxes (col_max)
+    document.querySelectorAll('.check-col-max').forEach(cb => {
+      let checked = !!_state.col_max[cb.dataset.id];
+      if (!checked) {
+        const card = cb.closest('.item-card');
+        const counts = card ? card.querySelectorAll('.inv-count') : [];
+        for (const c of counts) {
+          if (_state.col_max[c.dataset.id]) {
+            checked = true;
+            break;
+          }
+        }
+      }
+      cb.checked = checked;
+      cb.closest('.item-check').classList.toggle('is-checked', checked);
+      cb.closest('.item-check').classList.toggle('is-disabled', cb.disabled);
+    });
+    applyFilters();
+  }
+
+  function initPage() {
+    fetch('/api/state')
+      .then(r => r.json())
+      .then(state => {
+        _state = {
+          inv: state.inv || {},
+          col: state.col || {},
+          col_max: state.col_max || {},
+          inv_details: state.inv_details || {}
+        };
+        applyState();
+      });
+
+    // Collection-book status is read-only in the UI.
+
+    // Filter buttons
+    const btnCol = document.getElementById('filter-col');
+    const btnMax = document.getElementById('filter-max');
+    const btnInv = document.getElementById('filter-inv');
+    if (btnCol) {
+      btnCol.classList.toggle('active', _filterCol);
+      btnCol.addEventListener('click', () => {
+        _filterCol = !_filterCol;
+        localStorage.setItem('filter-col', _filterCol ? '1' : '0');
+        btnCol.classList.toggle('active', _filterCol);
+        applyFilters();
+      });
+    }
+    if (btnMax) {
+      btnMax.classList.toggle('active', _filterMax);
+      btnMax.addEventListener('click', () => {
+        _filterMax = !_filterMax;
+        localStorage.setItem('filter-max', _filterMax ? '1' : '0');
+        btnMax.classList.toggle('active', _filterMax);
+        applyFilters();
+      });
+    }
+    if (btnInv) {
+      btnInv.classList.toggle('active', _filterInv);
+      btnInv.addEventListener('click', () => {
+        _filterInv = !_filterInv;
+        localStorage.setItem('filter-inv', _filterInv ? '1' : '0');
+        btnInv.classList.toggle('active', _filterInv);
+        applyFilters();
+      });
+    }
+    const btnDup = document.getElementById('filter-dup');
+    if (btnDup) {
+      btnDup.classList.toggle('active', _filterDup);
+      btnDup.addEventListener('click', () => {
+        _filterDup = !_filterDup;
+        localStorage.setItem('filter-dup', _filterDup ? '1' : '0');
+        btnDup.classList.toggle('active', _filterDup);
+        applyFilters();
+      });
+    }
+
+    // Search input
+    const searchInput = document.getElementById('search-slots');
+    if (searchInput) {
+      searchInput.value = _searchQuery;
+      searchInput.addEventListener('input', () => {
+        _searchQuery = searchInput.value.trim().toLowerCase();
+        localStorage.setItem('filter-search', _searchQuery);
+        applyFilters();
+      });
+    }
+
+    // Rarity filter buttons (active = rarity visible; inactive = rarity hidden)
+    document.querySelectorAll('.rarity-filter').forEach(btn => {
+      const rc = btn.dataset.rarity;
+      // Restore persisted state
+      const isHidden = _hiddenRarities.has(rc);
+      btn.classList.toggle('active', !isHidden);
+      btn.addEventListener('click', () => {
+        if (_hiddenRarities.has(rc)) {
+          _hiddenRarities.delete(rc);
+          btn.classList.add('active');
+        } else {
+          _hiddenRarities.add(rc);
+          btn.classList.remove('active');
+        }
+        localStorage.setItem('filter-hidden-rarities', JSON.stringify([..._hiddenRarities]));
+        applyFilters();
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initPage);
+})();
+</script>
+</body>
+</html>
