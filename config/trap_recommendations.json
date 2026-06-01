@@ -15,7 +15,7 @@
           "description": "Build 1 - Max Damage Per Shot"
         }
       ],
-      "trap_template": "tid_ceiling_gas_sr_t05"
+      "trap_template": "sid_ceiling_gas_sr_t05"
     },
     {
       "builds": [
@@ -53,7 +53,7 @@
           "description": "Build 3 - Higher Durability"
         }
       ],
-      "trap_template": "tid_ceiling_falling_sr_t05"
+      "trap_template": "sid_ceiling_falling_sr_t05"
     },
     {
       "builds": [
@@ -69,7 +69,7 @@
           "description": "Build 1 - Max Damage Per Shot"
         }
       ],
-      "trap_template": "tid_ceiling_electric_aoe_sr_t05"
+      "trap_template": "sid_ceiling_electric_aoe_sr_t05"
     },
     {
       "builds": [
@@ -96,7 +96,7 @@
           "description": "Build 2 - Max Damage Per Shot"
         }
       ],
-      "trap_template": "tid_ceiling_electric_single_sr_t05"
+      "trap_template": "sid_ceiling_electric_single_sr_t05"
     },
     {
       "builds": [
@@ -112,7 +112,7 @@
           "description": "Build 1 - Max Damage Per Second"
         }
       ],
-      "trap_template": "tid_wall_cannons_sr_t05"
+      "trap_template": "sid_wall_cannons_sr_t05"
     },
     {
       "builds": [
@@ -139,7 +139,7 @@
           "description": "Build 2 - Double Crit Rating"
         }
       ],
-      "trap_template": "tid_wall_electric_sr_t05"
+      "trap_template": "sid_wall_electric_sr_t05"
     },
     {
       "builds": [
@@ -154,7 +154,7 @@
           "description": "Build 1 - High Impact"
         }
       ],
-      "trap_template": "tid_wall_light_sr_t05"
+      "trap_template": "sid_wall_light_sr_t05"
     },
     {
       "builds": [
@@ -179,7 +179,7 @@
           "description": "Build 2 - High Impact"
         }
       ],
-      "trap_template": "tid_wall_launcher_sr_t05"
+      "trap_template": "sid_wall_launcher_sr_t05"
     },
     {
       "builds": [
@@ -217,7 +217,7 @@
           "description": "Build 3 - Double Crit Rating"
         }
       ],
-      "trap_template": "tid_wall_wood_spikes_sr_t05"
+      "trap_template": "sid_wall_wood_spikes_sr_t05"
     },
     {
       "builds": [
@@ -233,7 +233,7 @@
           "description": "Build 1 - Max Damage Per Shot"
         }
       ],
-      "trap_template": "tid_wall_darts_sr_t05"
+      "trap_template": "sid_wall_darts_sr_t05"
     },
     {
       "builds": [
@@ -271,7 +271,7 @@
           "description": "Build 3"
         }
       ],
-      "trap_template": "tid_wall_speaker_sr_t05"
+      "trap_template": "sid_wall_speaker_sr_t05"
     },
     {
       "builds": [
@@ -298,7 +298,7 @@
           "description": "Build 2 - High Durability"
         }
       ],
-      "trap_template": "tid_floor_freeze_sr_t05"
+      "trap_template": "sid_floor_freeze_sr_t05"
     },
     {
       "builds": [
@@ -314,7 +314,7 @@
           "description": "Build 1"
         }
       ],
-      "trap_template": "tid_floor_flamegrill_sr_t05"
+      "trap_template": "sid_floor_flamegrill_sr_t05"
     },
     {
       "builds": [
@@ -352,7 +352,7 @@
           "description": "Build 3 - Max Durability"
         }
       ],
-      "trap_template": "tid_floor_spikes_wood_sr_t05"
+      "trap_template": "sid_floor_spikes_wood_sr_t05"
     },
     {
       "builds": [
@@ -384,7 +384,7 @@
           "description": "Build 1"
         }
       ],
-      "trap_template": "tid_floor_launcher_sr_t05"
+      "trap_template": "sid_floor_launcher_sr_t05"
     },
     {
       "builds": [
@@ -400,7 +400,7 @@
           "description": "Build 1 - Max Durability"
         }
       ],
-      "trap_template": "tid_floor_tar_sr_t05"
+      "trap_template": "sid_floor_tar_sr_t05"
     },
     {
       "builds": [
@@ -427,7 +427,7 @@
           "description": "Build 2 - Max Range And Fire Rate"
         }
       ],
-      "trap_template": "tid_floor_ward_sr_t05"
+      "trap_template": "sid_floor_ward_sr_t05"
     }
   ]
 }

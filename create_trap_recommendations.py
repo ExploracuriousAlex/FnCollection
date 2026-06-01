@@ -53,9 +53,6 @@ class AlterationAssetText:
 
 def _normalized_trap_template(template_id: str) -> str:
     token = template_id.split(":", 1)[-1].lower().strip()
-    # Inventory templates often use sid_ while the model uses tid_.
-    if token.startswith("sid_"):
-        token = "tid_" + token[4:]
     return token
 
 
@@ -213,13 +210,12 @@ def _matches_build(item: dict, trap: TrapDefinition, build: BuildDefinition) -> 
 
 
 def _localized_trap_name(trap: TrapDefinition, lang: str) -> str:
-    fallback = _normalized_trap_template(trap.trap_template).replace("_", " ").strip().title()
     resolved = lookup_item_definition_name(trap.trap_template)
     if isinstance(resolved, dict):
-        value = resolved.get(lang) or resolved.get("en")
+        value = resolved.get(lang)
         if isinstance(value, str) and value.strip() and value.strip() != "-":
             return value.strip()
-    return _loc(fallback, lang)
+    return _normalized_trap_template(trap.trap_template)
 
 
 def _build_description(build: BuildDefinition) -> str:
@@ -247,8 +243,6 @@ def _markdown_icon_src(icon_url: str, output_dir: Path) -> str:
 def _resolve_trap_slot(trap: TrapDefinition, template_map: dict[str, list[str]], slot_lookup: dict[str, dict]) -> dict | None:
     template_token = trap.trap_template.lower().strip()
     slot_ids = _lookup_template_slot_ids(template_map, template_token)
-    if not slot_ids and template_token.startswith("tid_"):
-        slot_ids = _lookup_template_slot_ids(template_map, "sid_" + template_token[4:])
     for slot_id in slot_ids:
         slot = slot_lookup.get(slot_id)
         if isinstance(slot, dict):
@@ -258,11 +252,11 @@ def _resolve_trap_slot(trap: TrapDefinition, template_map: dict[str, list[str]],
 
 def _localized_text_by_loc_key(loc_key: str, fallback_en: str, lang: str) -> str:
     if not loc_key:
-        return _loc(fallback_en, lang)
+        return ""
     localized = _get_loc_key_maps().get(lang, {}).get(loc_key)
     if isinstance(localized, str) and localized.strip():
         return localized.strip()
-    return _loc(fallback_en, lang)
+    return ""
 
 
 def _localized_alteration_label(
