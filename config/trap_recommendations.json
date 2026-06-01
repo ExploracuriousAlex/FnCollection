@@ -1,0 +1,433 @@
+{
+  "version": 1,
+  "traps": [
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_effectduration_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Shot"
+        }
+      ],
+      "trap_template": "tid_ceiling_gas_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Second"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Max Damage Per Shot"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 3 - Higher Durability"
+        }
+      ],
+      "trap_template": "tid_ceiling_falling_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_ele_energy_intrin_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Shot"
+        }
+      ],
+      "trap_template": "tid_ceiling_electric_aoe_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_ele_energy_intrin_t05",
+            "aid_att_damage_t05",
+            "aid_att_damage_t05",
+            "aid_att_damage_t05",
+            "aid_att_damage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - High Damage"
+        },
+        {
+          "alterations": [
+            "aid_ele_energy_intrin_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Max Damage Per Shot"
+        }
+      ],
+      "trap_template": "tid_ceiling_electric_single_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Second"
+        }
+      ],
+      "trap_template": "tid_wall_cannons_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_ele_energy_intrin_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Shot"
+        },
+        {
+          "alterations": [
+            "aid_ele_energy_intrin_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Double Crit Rating"
+        }
+      ],
+      "trap_template": "tid_wall_electric_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_effectduration_t05"
+          ],
+          "description": "Build 1 - High Impact"
+        }
+      ],
+      "trap_template": "tid_wall_light_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - High Durability"
+        },
+        {
+          "alterations": [
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - High Impact"
+        }
+      ],
+      "trap_template": "tid_wall_launcher_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 1 - Max Damage Plus Healing"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_buildingmaxhealth_t05"
+          ],
+          "description": "Build 2 - Max Damage Plus Building Health"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 3 - Double Crit Rating"
+        }
+      ],
+      "trap_template": "tid_wall_wood_spikes_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Shot"
+        }
+      ],
+      "trap_template": "tid_wall_darts_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - High Durability"
+        },
+        {
+          "alterations": [
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Max Durability"
+        },
+        {
+          "alterations": [
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 3"
+        }
+      ],
+      "trap_template": "tid_wall_speaker_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_effectduration_t05"
+          ],
+          "description": "Build 1 - High Impact"
+        },
+        {
+          "alterations": [
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_effectduration_t05"
+          ],
+          "description": "Build 2 - High Durability"
+        }
+      ],
+      "trap_template": "tid_floor_freeze_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_ele_fire_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1"
+        }
+      ],
+      "trap_template": "tid_floor_flamegrill_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Shot"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 2 - Double Crit Rating"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 3 - Max Durability"
+        }
+      ],
+      "trap_template": "tid_floor_spikes_wood_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Damage Per Second"
+        }
+      ],
+      "trap_template": "sid_floor_spikes_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_knockbackimpact_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1"
+        }
+      ],
+      "trap_template": "tid_floor_launcher_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_ele_fire_intrin_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Max Durability"
+        }
+      ],
+      "trap_template": "tid_floor_tar_sr_t05"
+    },
+    {
+      "builds": [
+        {
+          "alterations": [
+            "aid_att_damage_t05",
+            "aid_att_damage_t05",
+            "aid_att_damage_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 1 - Center Against Thrown Enemies"
+        },
+        {
+          "alterations": [
+            "aid_att_traprange_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_traprange_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_buildingheal_t05"
+          ],
+          "description": "Build 2 - Max Range And Fire Rate"
+        }
+      ],
+      "trap_template": "tid_floor_ward_sr_t05"
+    }
+  ]
+}

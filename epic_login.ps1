@@ -89,3 +89,4 @@ Write-Host "You can now run:" -ForegroundColor Green
 Write-Host "  uv run .\get_data.py" -ForegroundColor Green
 Write-Host "  uv run .\missing_items.py" -ForegroundColor Green
 Write-Host "  uv run .\squads.py" -ForegroundColor Green
+Write-Host "  uv run .\create_trap_recommendations.py" -ForegroundColor Green

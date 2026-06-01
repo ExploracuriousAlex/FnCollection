@@ -256,6 +256,22 @@ A static Markdown document with recommended perk configurations for all STW trap
 
 View directly in VS Code or any Markdown viewer — the embedded images reference the exported game textures via relative paths.
 
+### 7.4 `create_trap_recommendations.py` — Generate localized trap recommendation files
+
+Compares your latest normalized inventory snapshot with the recommendation model in `config/trap_recommendations.json` and generates localized Markdown outputs for all recommended builds and missing builds.
+
+```bash
+uv run python create_trap_recommendations.py --lang en
+uv run python create_trap_recommendations.py --lang de
+```
+
+Output files are written to the project root:
+
+- `trap_recommendations.md`
+- `trap_recommendations_missing.md`
+
+No backups are created for these generated recommendation files.
+
 ---
 
 ## 8. Starting the web app
