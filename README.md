@@ -25,21 +25,22 @@ Download [FModel](https://fmodel.app/), open the Fortnite directory, and export 
 
 | Purpose | Path in FModel |
 |---|---|
-| Set bonus & personality labels | `FortniteGame/Content/Items/ItemCategories` *(single file)* |
+| Set bonus & personality labels | `FortniteGame/Content/Items/ItemCategories.json` *(single file)* |
 | Rarity label translations | `FortniteGame/Content/Localization/Fortnite_locchunk10/` |
 | Set bonus & personality label translations | `FortniteGame/Content/Localization/Fortnite_locchunk20/` |
 | Collection Book tables | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/CollectionBook/Data/` |
 | Hero definitions (HID) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Heroes/` |
-| Crafting recipes (SID → WID/TID mapping) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/DataTables/CraftingRecipes_New` *(single file)* |
+| Crafting recipes (SID → WID/TID mapping) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/DataTables/CraftingRecipes_New.json` *(single file)* |
 | Defender definitions (DID) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Defenders/` |
 | Schematic definitions (SID) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Schematics/` |
 | Trap definitions (TID) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Traps/` |
+| Alteration definitions (perk labels for trap recommendations) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Alteration_v2/AttributeAlterations/` |
 | Weapon definitions (WID) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Weapons/` |
 | Survivor definitions | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Items/Workers/` |
 | STW localization | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Localization/SaveTheWorld/` |
-| Mythic leader portrait definitions | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/UI/Icons/Icon-Worker/IconDefinitions` *(single file)* |
+| Mythic leader portrait definitions | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/UI/Icons/Icon-Worker/IconDefinitions/` |
 | Mission generator definitions (for `missing_items.py`) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/World/MissionGens/` |
-| Difficulty growth table (for PL mapping in `missing_items.py`) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Balance/Datatables/GameDifficultyGrowthBounds` *(single file)* |
+| Difficulty growth table (for PL mapping in `missing_items.py`) | `FortniteGame/Plugins/GameFeatures/SaveTheWorld/Content/Balance/Datatables/GameDifficultyGrowthBounds.json` *(single file)* |
 
 > **Note on localization:** Each localization folder contains language sub-folders (`en`, `de`, `es`, …). Export only the languages you want to support, or export all sub-folders for full multi-language support.
 
@@ -80,62 +81,63 @@ After copying the FModel exports, the project should look like this:
 FortniteCollection/
 ├── FortniteGame/
 │   ├── Content/
-│   │   ├── Athena/Items/Traps/Campfire/              ← campfire icon
+│   │   ├── Athena/Items/Traps/Campfire/  ← campfire icon
 │   │   ├── Items/
-│   │   │   └── ItemCategories.json                   ← set bonus & personality data
+│   │   │   └── ItemCategories.json  ← set bonus & personality data
 │   │   ├── Localization/
-│   │   │   ├── Fortnite_locchunk10/                  ← rarity label translations
-│   │   │   └── Fortnite_locchunk20/                  ← set bonus & personality translations
+│   │   │   ├── Fortnite_locchunk10/  ← rarity label translations
+│   │   │   └── Fortnite_locchunk20/  ← set bonus & personality translations
 │   │   └── UI/Foundation/Textures/Icons/
-│   │       ├── Cards/Personalities/                  ← personality badge icons
-│   │       ├── Stats/                                ← set-bonus stat icons
-│   │       ├── Weapons/                              ← weapon icons (BR)
-│   │       └── Workers/Generic/                      ← generic survivor portraits
+│   │       ├── Cards/Personalities/  ← personality badge icons
+│   │       ├── Stats/  ← set-bonus stat icons
+│   │       ├── Weapons/  ← weapon icons (BR)
+│   │       └── Workers/Generic/  ← generic survivor portraits
 │   └── Plugins/GameFeatures/
 │       ├── BRCosmetics/Content/UI/Foundation/Textures/Icons/
 │       │   ├── Heroes/
-│       │   │   ├── Athena/Soldier/                   ← BR hero icons (Athena)
-│       │   │   ├── Outlander/Portrait/               ← BR hero icons (Outlander)
-│       │   │   ├── Soldier/Portrait/                 ← BR hero icons (Soldier)
-│       │   │   └── Variants/                         ← BR hero skin variants
-│       │   └── Weapons/Items/                        ← weapon icons (BRCosmetics)
+│       │   │   ├── Athena/Soldier/  ← BR hero icons (Athena)
+│       │   │   ├── Outlander/Portrait/  ← BR hero icons (Outlander)
+│       │   │   ├── Soldier/Portrait/  ← BR hero icons (Soldier)
+│       │   │   └── Variants/  ← BR hero skin variants
+│       │   └── Weapons/Items/  ← weapon icons (BRCosmetics)
 │       └── SaveTheWorld/Content/
-│           ├── Balance/Datatables/                   ← GameDifficultyGrowthBounds.json
-│           ├── CollectionBook/Data/                  ← Collection Book tables (JSON)
-│           ├── Heroes/                               ← hero definitions (HID_*.json)
+│           ├── Balance/Datatables/  ← GameDifficultyGrowthBounds.json
+│           ├── CollectionBook/Data/  ← Collection Book tables (JSON)
+│           ├── Heroes/  ← hero definitions (HID_*.json)
 │           ├── Items/
-│           │   ├── DataTables/CraftingRecipes_New.json ← SID→WID/TID mapping
-│           │   ├── Defenders/                        ← DID_*.json
-│           │   ├── Schematics/                       ← SID_*.json
-│           │   ├── Traps/                            ← TID_*.json
-│           │   ├── Weapons/                          ← WID_*.json + weapon icons
-│           │   └── Workers/                          ← survivor definitions
-│           ├── Localization/SaveTheWorld/             ← STW localization
-│           ├── World/MissionGens/                    ← mission names (missing_items.py)
+│           │   ├── Alteration_v2/AttributeAlterations/  ← perk localization source for trap recommendations
+│           │   ├── DataTables/CraftingRecipes_New.json  ← SID→WID/TID mapping
+│           │   ├── Defenders/  ← DID_*.json
+│           │   ├── Schematics/  ← SID_*.json
+│           │   ├── Traps/  ← TID_*.json
+│           │   ├── Weapons/  ← WID_*.json + weapon icons
+│           │   └── Workers/  ← survivor definitions
+│           ├── Localization/SaveTheWorld/  ← STW localization
+│           ├── World/MissionGens/  ← mission names (missing_items.py)
 │           └── UI/
 │               ├── Foundation/Textures/
 │               │   ├── Icons/
-│               │   │   ├── Heroes/                   ← STW hero icons
-│               │   │   ├── Weapons/                  ← STW weapon icons
-│               │   │   └── Workers/                  ← STW survivor/leader portraits
-│               │   └── Quest/                        ← STW quest icons
+│               │   │   ├── Heroes/  ← STW hero icons
+│               │   │   ├── Weapons/  ← STW weapon icons
+│               │   │   └── Workers/  ← STW survivor/leader portraits
+│               │   └── Quest/  ← STW quest icons
 │               └── Icons/
-│                   ├── Classes/                      ← STW class icons
-│                   ├── Defenders/                    ← STW defender icons
+│                   ├── Classes/  ← STW class icons
+│                   ├── Defenders/  ← STW defender icons
 │                   └── Icon-Worker/IconDefinitions/  ← mythic leader portrait definitions
 ├── static/
 ├── templates/
-├── app.py                                ← Flask web application
-├── data_loader.py                        ← collection book data resolution
-├── epic_api.py                           ← Epic Games API client
-├── epic_login.ps1                        ← helper to get/set EPIC_REFRESH_TOKEN
-├── get_data.py                           ← inventory importer (Epic MCP)
-├── missing_items.py                      ← generates missing_items.txt
-├── squads.py                             ← generates squads.txt
-├── state.py                              ← collection.json read/write
+├── app.py  ← Flask web application
+├── data_loader.py  ← collection book data resolution
+├── epic_api.py  ← Epic Games API client
+├── epic_login.ps1  ← helper to get/set EPIC_REFRESH_TOKEN
+├── get_data.py  ← inventory importer (Epic MCP)
+├── missing_items.py  ← generates missing_items.txt
+├── squads.py  ← generates squads.txt
+├── state.py  ← collection.json read/write
 ├── data/
-│   └── collection.json                   ← created automatically (internal)
-└── backups/                              ← auto-generated backup files
+│   └── collection.json  ← created automatically (internal)
+└── backups/  ← auto-generated backup files
 ```
 
 ---
