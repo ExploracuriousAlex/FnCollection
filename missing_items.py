@@ -861,7 +861,7 @@ def build_report(
     lines.append(f"AVAILABLE TODAY ({total_available})")
     lines.append("-" * 80)
     if total_available == 0:
-        lines.append("No matches from the above list are available today.")
+        lines.append("---")
         lines.append("")
     else:
         for key in ("heroes", "weapons", "mythic_leads"):
@@ -889,7 +889,7 @@ def build_report(
     lines.append(f"AVAILABLE TODAY (ALL) ({total_available_all})")
     lines.append("-" * 80)
     if total_available_all == 0:
-        lines.append("No matches found.")
+        lines.append("---")
         lines.append("")
     else:
         for key in ("heroes", "weapons", "mythic_leads"):
