@@ -202,8 +202,6 @@ def _matches_build(item: dict, trap: TrapDefinition, build: BuildDefinition) -> 
     actual = _item_alterations(item)
     required = Counter(build.alterations)
     for alteration_id, required_count in required.items():
-        if not alteration_id.endswith("_t05"):
-            return False
         if actual.get(alteration_id, 0) < required_count:
             return False
     return True
