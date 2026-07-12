@@ -35,6 +35,77 @@ COMBAT_EFFECT_MAGNITUDE_PATH = (
 )
 WEAPON_DURABILITY_PATH = BASE_DIR / "FortniteGame" / "Content" / "Items" / "DataTables" / "WeaponDurabilityRarity.json"
 
+# Parent blueprint directories containing alteration attribute definitions
+ALTERATION_PARENT_ASSET_DIRS = [
+    BASE_DIR / "FortniteGame" / "Content" / "Items" / "Alteration_v2" / "ParentAssets",
+    BASE_DIR
+    / "FortniteGame"
+    / "Plugins"
+    / "GameFeatures"
+    / "SaveTheWorld"
+    / "Content"
+    / "Items"
+    / "Alteration_v2"
+    / "ParentAssets",
+]
+
+
+def _build_combat_row_mapping() -> dict[str, str]:
+    """
+    Programmatically extract AID-to-CombatEffectMagnitude row name mappings from parent blueprint files.
+
+    Searches for GET_Alteration_Attribute_*.json files and extracts the RowName from their
+    ModifierMagnitude.ScalableFloatMagnitude.Curve definitions.
+
+    For attributes with multiple modifiers, prioritizes Trap-specific versions.
+
+    Returns:
+        dict: Mapping from AID name substring (lowercase) to CombatEffectMagnitude row name.
+              Example: {"damage": "Item.All.Damage.Normal", ...}
+    """
+    mapping: dict[str, str] = {}
+
+    for parent_dir in ALTERATION_PARENT_ASSET_DIRS:
+        if not parent_dir.exists():
+            continue
+
+        # Find all GET_Alteration_Attribute_*.json files
+        for json_file in sorted(parent_dir.glob("GET_Alteration_Attribute_*.json")):
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                # Extract attribute name from filename: "GET_Alteration_Attribute_Damage.json" -> "damage"
+                attribute_name = json_file.stem.replace("GET_Alteration_Attribute_", "").lower()
+
+                # Find the row name in any object with Modifiers -> ModifierMagnitude -> ScalableFloatMagnitude -> Curve
+                # Collect all valid RowNames from this file
+                row_names: list[str] = []
+                for obj in data:
+                    properties = obj.get("Properties", {})
+                    modifiers = properties.get("Modifiers", [])
+
+                    for modifier in modifiers:
+                        magnitude = modifier.get("ModifierMagnitude", {})
+                        scalable_float = magnitude.get("ScalableFloatMagnitude", {})
+                        curve = scalable_float.get("Curve", {})
+                        row_name = curve.get("RowName", "")
+
+                        if row_name and row_name != "None":
+                            row_names.append(row_name)
+
+                if row_names:
+                    # Prefer Trap versions if available, otherwise take the first one
+                    trap_version = next((r for r in row_names if "Item.Trap" in r), None)
+                    mapping[attribute_name] = trap_version if trap_version else row_names[0]
+
+            except (json.JSONDecodeError, IOError, KeyError):
+                # Skip files that can't be read or parsed
+                continue
+
+    return mapping
+
+
 RELEVANT_TRAP_ATTRIBUTES_EN: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "Ceiling Drop Trap",
@@ -203,6 +274,7 @@ RARITY_LABELS = {
     "EFortRarity::Legendary": "T5",
 }
 
+
 @dataclass(frozen=True)
 class TrapBaseStats:
     row_name: str
@@ -226,6 +298,7 @@ class AlterationEffect:
     aid_token: str
     label: str
     description: str
+    primary_effect_value: float = 1.0
     damage_mult: float = 1.0
     reload_speed_mult: float = 1.0
     crit_chance_bonus: float = 0.0
@@ -238,6 +311,7 @@ class DetailedLoadoutRow:
     trap_name: str
     relevant_attributes: frozenset[str]
     perks: tuple[str, ...]
+    slot_values: tuple[float, ...]
     damage_per_second: float
     damage_per_shot: float
     total_trap_damage: float
@@ -267,6 +341,20 @@ def _norm_aid_token(value: str) -> str:
     return value.split(":", 1)[-1].strip().lower()
 
 
+def _effective_crit_chance(crit: float) -> float:
+    """
+    Berechnet die effektive Crit Chance nach Game-Formel.
+    
+    Parameter:
+        crit: Critical Hit Chance in Dezimalform (z.B. 0.54 für 54%)
+    
+    Rückgabe:
+        Effektive Crit Chance
+    """
+    value = (3 * crit) / (4 * crit + 2)
+    return round(value * 2, 2) / 2
+
+
 def _norm_label(value: str) -> str:
     return " ".join(value.split()).casefold()
 
@@ -280,24 +368,145 @@ def _require_combat_row(combat_rows: dict, row_name: str, aid_name: str) -> dict
     return row
 
 
-def _load_relevant_trap_attributes() -> tuple[list[tuple[str, list[str]]], list[str]]:
-    attr_order: list[str] = []
+def _attribute_column_order() -> list[str]:
+    seen: set[str] = set()
+    order: list[str] = []
+    for _, attrs in RELEVANT_TRAP_ATTRIBUTES_EN:
+        for attr in attrs:
+            if attr not in seen:
+                seen.add(attr)
+                order.append(attr)
+    return order
 
-    translated: list[tuple[str, list[str]]] = []
-    for trap_en, attrs_source in RELEVANT_TRAP_ATTRIBUTES_EN:
-        attrs_en: list[str] = []
-        for attr_en in attrs_source:
-            attrs_en.append(attr_en)
-            if attr_en not in attr_order:
-                attr_order.append(attr_en)
-        translated.append((trap_en, attrs_en))
 
-    return translated, attr_order
+def _build_combat_row_mapping() -> dict[str, str]:
+    """
+    Programmatically extract AID-to-CombatEffectMagnitude row name mappings from parent blueprint files.
+
+    Searches for GET_Alteration_Attribute_*.json files and extracts the RowName from their
+    ModifierMagnitude.ScalableFloatMagnitude.Curve definitions.
+
+    For attributes with multiple modifiers, prioritizes Trap-specific versions.
+
+    Returns:
+        dict: Mapping from attribute name (lowercase) to CombatEffectMagnitude row name.
+              Example: {"damage": "Item.All.Damage.Normal", ...}
+    """
+    mapping: dict[str, str] = {}
+
+    for parent_dir in ALTERATION_PARENT_ASSET_DIRS:
+        if not parent_dir.exists():
+            continue
+
+        # Find all GET_Alteration_Attribute_*.json files
+        for json_file in sorted(parent_dir.glob("GET_Alteration_Attribute_*.json")):
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                # Extract attribute name from filename: "GET_Alteration_Attribute_Damage.json" -> "damage"
+                attribute_name = json_file.stem.replace("GET_Alteration_Attribute_", "").lower()
+
+                # Find the row name in any object with Modifiers -> ModifierMagnitude -> ScalableFloatMagnitude -> Curve
+                # Collect all valid RowNames from this file
+                row_names: list[str] = []
+                for obj in data:
+                    properties = obj.get("Properties", {})
+                    modifiers = properties.get("Modifiers", [])
+
+                    for modifier in modifiers:
+                        magnitude = modifier.get("ModifierMagnitude", {})
+                        scalable_float = magnitude.get("ScalableFloatMagnitude", {})
+                        curve = scalable_float.get("Curve", {})
+                        row_name = curve.get("RowName", "")
+
+                        if row_name and row_name != "None":
+                            row_names.append(row_name)
+
+                if row_names:
+                    # Prefer Trap versions if available, otherwise take the first one
+                    trap_version = next((r for r in row_names if "Item.Trap" in r), None)
+                    mapping[attribute_name] = trap_version if trap_version else row_names[0]
+
+            except (json.JSONDecodeError, IOError, KeyError):
+                # Skip files that can't be read or parsed
+                continue
+
+    return mapping
+
+
+def _build_aid_to_attribute_mapping() -> dict[str, str]:
+    """
+    Build exact 1:1 mapping from AID token to attribute name by reading AID properties.
+
+    For each AID file, extracts the attribute from its AlterationAbilitySet reference,
+    which contains the attribute name in the asset name (e.g., AS_Att_BuildingHeal_T01 → "BuildingHeal").
+    
+    Falls back to directory name if direct extraction fails.
+
+    Returns:
+        dict: Mapping from normalized AID token to attribute name (lowercase).
+              Example: {"aid_att_damage_t01": "damage", "aid_att_damage_physical_t01": "physical"}
+    """
+    mapping: dict[str, str] = {}
+
+    # Recursively search for all AID_*.json files in AttributeAlterations
+    alteration_base = ALTERATION_V2_DIR / "AttributeAlterations"
+    if not alteration_base.exists():
+        return mapping
+
+    for aid_file in alteration_base.rglob("AID_*.json"):
+        try:
+            aid_root = _first_obj(_read_json(aid_file))
+            aid_properties = aid_root.get("Properties", {})
+            aid_token = aid_file.stem.lower()
+
+            # Try to extract attribute name from AlterationAbilitySet reference
+            ability_set_ref = aid_properties.get("AlterationAbilitySet", {})
+            ability_asset = str(ability_set_ref.get("AssetPathName", ""))
+            
+            # Extract name from path like "/SaveTheWorld/Items/Alteration_v2/AttributeAlterations/Damage/AS_Att_Damage_T01"
+            # Get the part after the last "/" and before any "."
+            ability_name = ability_asset.rsplit("/", 1)[-1].split(".", 1)[0]  # e.g., "AS_Att_Damage_T01"
+            
+            # Extract attribute from "AS_Att_Damage_T01" → "Damage" or "AS_Att_Damage_Physical_T01" → "Damage_Physical"
+            # Pattern: AS_Att_<ATTRIBUTE>_T<TIER>
+            if ability_name.startswith("AS_Att_"):
+                # Remove "AS_Att_" prefix and "_T<number>" suffix
+                attribute_with_tier = ability_name[7:]  # Remove "AS_Att_"
+                # Find the last underscore followed by T and digits
+                import re
+                match = re.match(r"^(.+?)_T\d+$", attribute_with_tier)
+                if match:
+                    attribute_name = match.group(1).lower()
+                    mapping[aid_token] = attribute_name
+                    continue
+            
+            # Fallback: use directory name if extraction fails
+            # For cases like "Elemental/Physical", use the deepest directory name
+            relative_path = aid_file.parent.relative_to(alteration_base)
+            # Get the last directory component(s) that makes sense for the attribute
+            parts = list(relative_path.parts)
+            if len(parts) == 1:
+                # Simple case: Damage/AID_*.json
+                attribute_name = parts[0].lower()
+            elif len(parts) > 1:
+                # Nested case: Elemental/Physical/AID_*.json → use "physical"
+                attribute_name = parts[-1].lower()
+            else:
+                continue
+            
+            mapping[aid_token] = attribute_name
+
+        except Exception:
+            # Skip files that can't be parsed
+            continue
+
+    return mapping
 
 
 def _build_trap_token_index() -> dict[str, str]:
     index: dict[str, str] = {}
-
     for path in TRAP_ITEM_DIR.rglob("TID_*.json"):
         try:
             payload = _read_json(path)
@@ -307,18 +516,12 @@ def _build_trap_token_index() -> dict[str, str]:
         token = str(root.get("Name", "")).strip().lower()
         if not token:
             continue
-
-        aliases = {token}
         localized = lookup_item_definition_name(token)
-        if isinstance(localized, dict):
-            for lang_key in ("en", "de"):
-                value = localized.get(lang_key)
-                if isinstance(value, str) and value.strip():
-                    aliases.add(value.strip())
-
-        for alias in aliases:
-            index[_norm_label(alias)] = token
-
+        if not isinstance(localized, dict):
+            continue
+        en_name = localized.get("en")
+        if isinstance(en_name, str) and en_name.strip():
+            index[_norm_label(en_name)] = token
     return index
 
 
@@ -651,6 +854,7 @@ def _load_alteration_effect(
     aid_map: dict[str, Path],
     combat_rows: dict,
     alteration_json_map: dict[str, Path],
+    aid_combat_row_mapping: dict[str, str],
 ) -> AlterationEffect:
     aid_name = _norm_aid_token(aid_token)
     aid_path = aid_map.get(aid_name)
@@ -674,36 +878,39 @@ def _load_alteration_effect(
     crit_damage_bonus = 0.0
     durability_mult = 1.0
 
-    if "reloadspeed" in aid_name:
-        if ge_level > 0.0:
-            reload_speed_mult = _interpolate_curve(
-                _require_combat_row(combat_rows, "Item.Trap.ReloadSpeed.Normal", aid_name),
-                ge_level,
-            )
-    elif "maxdurability" in aid_name:
-        if ge_level > 0.0:
-            durability_mult = _interpolate_curve(
-                _require_combat_row(combat_rows, "Item.All.DurabilityDecay.Normal", aid_name),
-                ge_level,
-            )
-    elif "critdamage" in aid_name:
-        if ge_level > 0.0:
-            crit_damage_bonus = _interpolate_curve(
-                _require_combat_row(combat_rows, "Item.All.CritDamage.Normal", aid_name),
-                ge_level,
-            )
-    elif "critchance" in aid_name:
-        if ge_level > 0.0:
-            crit_chance_bonus = _interpolate_curve(
-                _require_combat_row(combat_rows, "Item.All.CritChance.Normal", aid_name),
-                ge_level,
-            )
-    elif "damage" in aid_name:
-        if ge_level > 0.0:
-            damage_mult = _interpolate_curve(
-                _require_combat_row(combat_rows, "Item.All.Damage.Normal", aid_name),
-                ge_level,
-            )
+    # Get the combat row name for this AID
+    combat_row_name = aid_combat_row_mapping.get(aid_name)
+
+    if combat_row_name and ge_level > 0.0:
+        combat_value = _interpolate_curve(
+            _require_combat_row(combat_rows, combat_row_name, aid_name),
+            ge_level,
+        )
+
+        # Determine which attribute this AID affects based on the row name
+        if "reloadspeed" in combat_row_name.lower():
+            reload_speed_mult = combat_value
+        elif "durability" in combat_row_name.lower():
+            durability_mult = combat_value
+        elif "critdamage" in combat_row_name.lower():
+            crit_damage_bonus = combat_value
+        elif "critrating" in combat_row_name.lower():
+            crit_chance_bonus = combat_value
+        elif "damage" in combat_row_name.lower() or "armor" in combat_row_name.lower():
+            # Damage, ElementalDamage, PhysicalDamage, etc.
+            damage_mult = combat_value
+
+    primary_effect_value = 1.0
+    if reload_speed_mult != 1.0:
+        primary_effect_value = reload_speed_mult
+    elif durability_mult != 1.0:
+        primary_effect_value = durability_mult
+    elif crit_damage_bonus != 0.0:
+        primary_effect_value = crit_damage_bonus
+    elif crit_chance_bonus != 0.0:
+        primary_effect_value = crit_chance_bonus
+    elif damage_mult != 1.0:
+        primary_effect_value = damage_mult
 
     return AlterationEffect(
         slot_index=-1,
@@ -712,6 +919,7 @@ def _load_alteration_effect(
         aid_token=aid_token,
         label=label,
         description=description,
+        primary_effect_value=primary_effect_value,
         damage_mult=damage_mult,
         reload_speed_mult=reload_speed_mult,
         crit_chance_bonus=crit_chance_bonus,
@@ -726,6 +934,7 @@ def _load_slot_options(
     combat_rows: dict,
     supports_effect_duration: bool,
     alteration_json_map: dict[str, Path],
+    aid_combat_row_mapping: dict[str, str],
 ) -> list[list[AlterationEffect]]:
     slot_loadouts = _first_obj(_read_json(ALTERATION_V2_DIR / "SlotLoadouts.json")).get("Rows", {})
     slot_defs = _first_obj(_read_json(ALTERATION_V2_DIR / "SlotDefs.json")).get("Rows", {})
@@ -769,9 +978,11 @@ def _load_slot_options(
                     if not aid_token:
                         continue
                     aid_normalized = _norm_aid_token(aid_token)
-                    if "effectduration" in aid_normalized and not supports_effect_duration:
+                    # Check if this AID affects effect duration (skip if not supported)
+                    aid_row_name = aid_combat_row_mapping.get(aid_normalized)
+                    if aid_row_name and "effectduration" in aid_row_name.lower() and not supports_effect_duration:
                         continue
-                    base_effect = _load_alteration_effect(aid_token, aid_map, combat_rows, alteration_json_map)
+                    base_effect = _load_alteration_effect(aid_token, aid_map, combat_rows, alteration_json_map, aid_combat_row_mapping)
                     options_for_slot.append(
                         AlterationEffect(
                             slot_index=slot_index,
@@ -780,6 +991,7 @@ def _load_slot_options(
                             aid_token=aid_token,
                             label=base_effect.label,
                             description=base_effect.description,
+                            primary_effect_value=base_effect.primary_effect_value,
                             damage_mult=base_effect.damage_mult,
                             reload_speed_mult=base_effect.reload_speed_mult,
                             crit_chance_bonus=base_effect.crit_chance_bonus,
@@ -836,16 +1048,21 @@ def _build_detailed_loadout_rows(
         cycle_time = stats.fire_delay + trap_reload_time
         trap_impact = stats.impact_damage_pb * damage_mult
         trap_damage = (stats.damage_pb + stats.impact_damage_pb) * damage_mult
-        damage_per_shot = trap_damage * (1.0 + (crit_chance * crit_damage_bonus))
+        eff_crit = _effective_crit_chance(crit_chance)
+        crit_multiplier = 1 + eff_crit * crit_damage_bonus
+        damage_per_shot = trap_damage * crit_multiplier
         damage_per_second = damage_per_shot / cycle_time if cycle_time > 0 else 0.0
         trap_durability = stats.durability * durability_mult
         total_trap_damage = damage_per_shot * trap_durability
+
+        slot_values = tuple(effect.primary_effect_value for effect in loadout)
 
         rows.append(
             DetailedLoadoutRow(
                 trap_name=trap_name,
                 relevant_attributes=frozenset(relevant_attributes),
                 perks=loadout_perks,
+                slot_values=slot_values,
                 damage_per_second=damage_per_second,
                 damage_per_shot=damage_per_shot,
                 total_trap_damage=total_trap_damage,
@@ -894,19 +1111,12 @@ def _attribute_value(row: DetailedLoadoutRow, attribute_name: str) -> float | No
 
 
 def _write_csv(path: Path, rows: list[DetailedLoadoutRow], attribute_columns: list[str]) -> Path:
-    headers = [
-        "Trap",
-        "Slot 1",
-        "Slot 2",
-        "Slot 3",
-        "Slot 4",
-        "Slot 5",
-        "Slot 6",
-        *attribute_columns,
-        "Damage per Second",
-        "Damage per Shot",
-        "Total Trap Damage",
-    ]
+    headers = ["Trap"]
+    for i in range(1, 7):
+        headers.append(f"Slot {i}")
+        headers.append(f"Slot {i} Value")
+    headers.extend(attribute_columns)
+    headers.extend(["Damage per Second", "Damage per Shot", "Total Trap Damage"])
 
     def format_de(value: float) -> str:
         return f"{value:.6f}".replace(".", ",")
@@ -919,6 +1129,14 @@ def _write_csv(path: Path, rows: list[DetailedLoadoutRow], attribute_columns: li
             while len(perks) < 6:
                 perks.append("")
 
+            row_data = [row.trap_name]
+            for i in range(6):
+                row_data.append(perks[i])
+                if i < len(row.slot_values):
+                    row_data.append(format_de(row.slot_values[i]))
+                else:
+                    row_data.append("")
+
             attr_cells: list[str] = []
             for attr_name in attribute_columns:
                 if attr_name not in row.relevant_attributes:
@@ -929,8 +1147,7 @@ def _write_csv(path: Path, rows: list[DetailedLoadoutRow], attribute_columns: li
 
             has_damage = "Damage" in row.relevant_attributes
             writer.writerow(
-                [row.trap_name]
-                + perks[:6]
+                row_data
                 + attr_cells
                 + [
                     format_de(row.damage_per_second) if has_damage else "",
@@ -943,7 +1160,7 @@ def _write_csv(path: Path, rows: list[DetailedLoadoutRow], attribute_columns: li
 
 
 def main() -> int:
-    translated_traps, attribute_columns = _load_relevant_trap_attributes()
+    attribute_columns = _attribute_column_order()
     trap_token_index = _build_trap_token_index()
 
     combat_rows = _first_obj(_read_json(COMBAT_EFFECT_MAGNITUDE_PATH)).get("Rows", {})
@@ -954,10 +1171,23 @@ def main() -> int:
     alteration_json_map = _build_alteration_json_map()
     exported_json_map = _build_exported_json_map()
 
+    # Build attribute-to-CombatRow mapping from parent blueprints
+    attribute_combat_row_mapping = _build_combat_row_mapping()
+
+    # Build AID-to-attribute mapping from directory structure
+    aid_to_attribute_mapping = _build_aid_to_attribute_mapping()
+
+    # Combine: AID -> Attribute -> CombatRow
+    aid_combat_row_mapping: dict[str, str] = {}
+    for aid_name, attribute_name in aid_to_attribute_mapping.items():
+        row_name = attribute_combat_row_mapping.get(attribute_name)
+        if row_name:
+            aid_combat_row_mapping[aid_name] = row_name
+
     csv_rows: list[DetailedLoadoutRow] = []
     missing_traps: list[str] = []
 
-    for trap_name, attributes in translated_traps:
+    for trap_name, attributes in RELEVANT_TRAP_ATTRIBUTES_EN:
         trap_token = _resolve_trap_token(trap_name, trap_token_index)
         if not trap_token:
             missing_traps.append(trap_name)
@@ -977,6 +1207,7 @@ def main() -> int:
             combat_rows,
             supports_effect_duration,
             alteration_json_map,
+            aid_combat_row_mapping,
         )
         csv_rows.extend(
             _build_detailed_loadout_rows(
