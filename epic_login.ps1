@@ -85,8 +85,19 @@ $env:EPIC_REFRESH_TOKEN = [string]$response.refresh_token
 
 Write-Host ""
 Write-Host "EPIC_REFRESH_TOKEN has been set in the current terminal." -ForegroundColor Green
-Write-Host "You can now run:" -ForegroundColor Green
+Write-Host "You can now run these scripts:" -ForegroundColor Green
 Write-Host "  uv run .\get_data.py" -ForegroundColor Green
 Write-Host "  uv run .\missing_items.py" -ForegroundColor Green
 Write-Host "  uv run .\squads.py" -ForegroundColor Green
 Write-Host "  uv run .\create_trap_recommendations.py" -ForegroundColor Green
+
+$runScriptsAnswer = Read-Host "Run the Python scripts now? [Y/n]"
+if ([string]::IsNullOrWhiteSpace($runScriptsAnswer) -or $runScriptsAnswer.Trim() -match '^(?i)y(?:es)?$') {
+    Write-Host "Starting Python scripts..." -ForegroundColor Green
+    uv run .\get_data.py
+    uv run .\missing_items.py --lang de
+    uv run .\squads.py --lang de
+    uv run .\create_trap_recommendations.py --lang de
+} else {
+    Write-Host "Skipped running Python scripts." -ForegroundColor Yellow
+}
