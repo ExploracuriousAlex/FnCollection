@@ -37,7 +37,17 @@ _API_RARITY: dict[str, str] = {
     "rare": "R",
     "epic": "VR",
     "legendary": "SR",
-    "mythic": "SR",  # Mythic heroes sit in SR slots in the CB
+    "mythic": "MYT",
+}
+
+# Collection Book slot rarity_css (resolved from the slot's linked item asset) → code
+_CSS_TO_RARITY_CODE: dict[str, str] = {
+    "rarity-c": "C",
+    "rarity-uc": "UC",
+    "rarity-r": "R",
+    "rarity-vr": "VR",
+    "rarity-sr": "SR",
+    "rarity-myt": "MYT",
 }
 
 _ROOT_DIR = Path(__file__).parent
@@ -247,6 +257,19 @@ def _extract_item_rarity_code(item: dict) -> str:
     return _API_RARITY.get(raw_rarity, "")
 
 
+def _schematic_rarity_code(template_id: str) -> str:
+    """Authoritative rarity for a weapon/trap schematic, read from its item definition file.
+
+    A schematic's rarity is baked into its definition and can be upgraded in-game
+    after crafting without the API's per-copy "starting_rarity" attribute changing,
+    so the definition file is preferred over that attribute when available.
+    """
+    info = lookup_item_definition_name(template_id)
+    if not info:
+        return ""
+    return _API_RARITY.get(info.get("rarity", ""), "")
+
+
 # ---------------------------------------------------------------------------
 # Profile extraction and normalization
 # ---------------------------------------------------------------------------
@@ -325,10 +348,22 @@ def _build_name_map(data: dict) -> dict[str, list[tuple[str, str]]]:
             for sec in page["sections"]:
                 for slot in sec["slots"]:
                     n = slot["name"].lower().strip()
-                    m = re.search(r"\.(C|UC|R|VR|SR)\.", slot["slot_id"], re.IGNORECASE)
-                    code = m.group(1).upper() if m else ""
+                    code = _CSS_TO_RARITY_CODE.get(slot.get("rarity_css", ""), "")
                     name_map.setdefault(n, []).append((code, slot["slot_id"]))
     return name_map
+
+
+def _build_slot_rarity_map(data: dict) -> dict[str, str]:
+    """Build slot_id -> rarity code, resolved from each slot's linked item asset (not its name)."""
+    slot_rarity_map: dict[str, str] = {}
+    for cat in data["categories"]:
+        for page in cat["pages"]:
+            for sec in page["sections"]:
+                for slot in sec["slots"]:
+                    slot_id = slot.get("slot_id")
+                    if isinstance(slot_id, str) and slot_id:
+                        slot_rarity_map[slot_id] = _CSS_TO_RARITY_CODE.get(slot.get("rarity_css", ""), "")
+    return slot_rarity_map
 
 
 def _build_slot_display_name_map(data: dict) -> dict[str, str]:
@@ -433,24 +468,37 @@ def _lookup_template_slot_ids_for_display(template_map: dict[str, list[str]], te
     return expanded
 
 
-def _slot_ids_to_candidates(slot_ids: list[str]) -> list[tuple[str, str]]:
-    out: list[tuple[str, str]] = []
-    for slot_id in slot_ids:
-        m = re.search(r"\.(C|UC|R|VR|SR)\.", slot_id, re.IGNORECASE)
-        code = m.group(1).upper() if m else ""
-        out.append((code, slot_id))
-    return out
+def _slot_ids_to_candidates(slot_ids: list[str], slot_rarity_map: dict[str, str]) -> list[tuple[str, str]]:
+    return [(slot_rarity_map.get(slot_id, ""), slot_id) for slot_id in slot_ids]
 
 
 def _lookup_collection_book_candidates(
     template_token: str,
     name_map: dict[str, list[tuple[str, str]]],
     template_map: dict[str, list[str]],
+    slot_rarity_map: dict[str, str],
 ) -> list[tuple[str, str]]:
     candidates = name_map.get(template_token, [])
     if not candidates:
-        candidates = _slot_ids_to_candidates(_lookup_template_slot_ids(template_map, template_token))
+        candidates = _slot_ids_to_candidates(
+            _lookup_template_slot_ids(template_map, template_token), slot_rarity_map,
+        )
     return candidates
+
+
+def _select_candidate_slots(candidates: list[tuple[str, str]], code: str) -> list[str]:
+    """Filter collection-book candidates by rarity code.
+
+    If there is only one candidate, it is returned regardless of a rarity-code
+    mismatch: a single candidate slot is still the only place the item can
+    belong, e.g. when its rarity code stems from the stale "starting_rarity"
+    attribute (heroes/defenders, or schematics without a resolvable definition file).
+    """
+    if len(candidates) == 1:
+        return [candidates[0][1]]
+    if not code:
+        return [sid for _, sid in candidates]
+    return [sid for c, sid in candidates if c == code]
 
 
 # ---------------------------------------------------------------------------
@@ -517,6 +565,7 @@ def _resolve_leader_slot_ids(
     item: dict,
     name_map: dict[str, list[tuple[str, str]]],
     template_map: dict[str, list[str]],
+    slot_rarity_map: dict[str, str],
 ) -> tuple[list[str] | None, str | None]:
     attrs = item.get("attributes", {})
     synergy_raw = attrs.get("managerSynergy", "")
@@ -531,7 +580,7 @@ def _resolve_leader_slot_ids(
     ).lower()
     if raw_rarity == "mythic":
         template_token = str(item.get("templateId", "")).lower().strip()
-        candidates = _lookup_collection_book_candidates(template_token, name_map, template_map)
+        candidates = _lookup_collection_book_candidates(template_token, name_map, template_map, slot_rarity_map)
         if not candidates:
             return [], "no_collection_book_match"
         return [slot_id for _, slot_id in candidates], None
@@ -703,6 +752,7 @@ def import_inventory(resp: dict, source_label: str) -> None:
     data = get_collection_book("en")
     name_map = _build_name_map(data)
     template_map = _build_template_slot_map(data)
+    slot_rarity_map = _build_slot_rarity_map(data)
 
     rprint(f"[dim]Loading {source_label} …[/dim]")
 
@@ -737,7 +787,7 @@ def import_inventory(resp: dict, source_label: str) -> None:
         if reason == "manager":
             continue
 
-        candidates = _lookup_collection_book_candidates(template_token, name_map, template_map)
+        candidates = _lookup_collection_book_candidates(template_token, name_map, template_map, slot_rarity_map)
         if reason == "no_worker_portrait":
             if not candidates:
                 _append_skipped_template(skipped_no_cb, item.get("templateId"))
@@ -756,7 +806,7 @@ def import_inventory(resp: dict, source_label: str) -> None:
     skipped_leads = 0
     for uuid, item in resp.get("survivors", {}).items():
         detail = _extract_variant_detail(item)
-        slot_ids, reason = _resolve_leader_slot_ids(item, name_map, template_map)
+        slot_ids, reason = _resolve_leader_slot_ids(item, name_map, template_map, slot_rarity_map)
         if slot_ids is None:
             continue
         if not slot_ids:
@@ -775,12 +825,12 @@ def import_inventory(resp: dict, source_label: str) -> None:
         if n in _DEFENDER_NON_CB_TEMPLATES:
             _append_skipped_template(skipped_no_cb, item.get("templateId"))
             continue
-        candidates = _lookup_collection_book_candidates(n, name_map, template_map)
+        candidates = _lookup_collection_book_candidates(n, name_map, template_map, slot_rarity_map)
         if not candidates:
             _append_skipped_template(skipped_no_cb, item.get("templateId"))
             continue
         rarity_code = _extract_item_rarity_code(item)
-        filtered = [sid for (c, sid) in candidates if c == rarity_code] if rarity_code else [sid for _, sid in candidates]
+        filtered = _select_candidate_slots(candidates, rarity_code)
         if not filtered:
             slots = [sid for _, sid in candidates]
             ambiguous.append((str(item.get("templateId", "")), str(item.get("rarity", "")), slots))
@@ -798,11 +848,13 @@ def import_inventory(resp: dict, source_label: str) -> None:
                 or item.get("rarity", "")
             ).lower()
             code = _API_RARITY.get(raw_rarity, "")
-            candidates = _lookup_collection_book_candidates(n, name_map, template_map)
+            if section == "schematics":
+                code = _schematic_rarity_code(n) or code
+            candidates = _lookup_collection_book_candidates(n, name_map, template_map, slot_rarity_map)
             if not candidates:
                 _append_skipped_template(skipped_no_cb, item.get("templateId"))
                 continue
-            filtered = [sid for (c, sid) in candidates if c == code]
+            filtered = _select_candidate_slots(candidates, code)
             detail = _extract_variant_detail(item, include_material=(section == "schematics"))
             if len(filtered) == 1:
                 _add_inv(filtered[0], detail=detail)
@@ -840,6 +892,7 @@ def import_collection_book(resp: dict, source_label: str) -> None:
     data = get_collection_book("en")
     name_map = _build_name_map(data)
     template_map = _build_template_slot_map(data)
+    slot_rarity_map = _build_slot_rarity_map(data)
 
     rprint(f"[dim]Loading collection entries from {source_label} …[/dim]")
 
@@ -857,10 +910,12 @@ def import_collection_book(resp: dict, source_label: str) -> None:
                 attrs.get("starting_rarity") or item.get("starting_rarity") or item.get("rarity", "")
             ).lower()
             code = _API_RARITY.get(raw_rarity, "")
+            if section == "schematics":
+                code = _schematic_rarity_code(n) or code
 
             if section == "survivors":
                 detail = _extract_variant_detail(item)
-                slot_ids, reason = _resolve_leader_slot_ids(item, name_map, template_map)
+                slot_ids, reason = _resolve_leader_slot_ids(item, name_map, template_map, slot_rarity_map)
                 if slot_ids is not None:
                     if not slot_ids:
                         if reason == "no_collection_book_match":
@@ -886,12 +941,12 @@ def import_collection_book(resp: dict, source_label: str) -> None:
                     _append_skipped_template(skipped_no_cb, template_id)
                     continue
 
-            candidates = _lookup_collection_book_candidates(n, name_map, template_map)
+            candidates = _lookup_collection_book_candidates(n, name_map, template_map, slot_rarity_map)
             if not candidates:
                 if isinstance(template_id, str) and template_id:
                     _append_skipped_template(skipped_no_cb, template_id)
                 continue
-            filtered = [sid for c, sid in candidates if c == code] if code else [sid for _, sid in candidates]
+            filtered = _select_candidate_slots(candidates, code)
             if not filtered:
                 ambiguous.append((str(template_id), raw_rarity, [sid for _, sid in candidates]))
                 continue
