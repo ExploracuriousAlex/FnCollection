@@ -110,6 +110,17 @@
             "aid_att_maxdurability_trap_t05"
           ],
           "description": "(L) Build 1 - Max Damage Per Second"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_reloadspeed_trap_t04",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Max Damage Per Second - Slightly Lower Reload Speed"
         }
       ],
       "trap_template": "sid_wall_cannons_sr_t05"
@@ -234,6 +245,17 @@
             "aid_att_maxdurability_trap_t05"
           ],
           "description": "(L) Build 1 - Max Damage Per Shot"
+        },
+        {
+          "alterations": [
+            "aid_att_damage_physical_t05",
+            "aid_att_damage_t05",
+            "aid_att_critdamage_t05",
+            "aid_att_critchance_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 2 - Max Damage Per Second"
         }
       ],
       "trap_template": "sid_wall_darts_sr_t05"
@@ -249,7 +271,7 @@
             "aid_att_maxdurability_trap_t05",
             "aid_att_maxdurability_trap_t05"
           ],
-          "description": "(L) Build 1 - High Durability"
+          "description": "(L) Build 1 - High Durability and Reload Speed"
         },
         {
           "alterations": [
@@ -272,6 +294,17 @@
             "aid_att_maxdurability_trap_t05"
           ],
           "description": "Build 3 - Balanced"
+        },
+        {
+          "alterations": [
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t05",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_reloadspeed_trap_t04",
+            "aid_att_maxdurability_trap_t05",
+            "aid_att_maxdurability_trap_t05"
+          ],
+          "description": "Build 4 - High Durability and Slightly Lower Reload Speed"
         }
       ],
       "trap_template": "sid_wall_speaker_sr_t05"
@@ -307,7 +340,7 @@
       "builds": [
         {
           "alterations": [
-            "aid_ele_fire_t05",
+            "aid_ele_fire_intrin_t05",
             "aid_att_damage_t05",
             "aid_att_critdamage_t05",
             "aid_att_critchance_t05",
