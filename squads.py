@@ -50,6 +50,7 @@ from data_loader import AVAILABLE_LANGS, _get_loc_key_maps, _get_set_bonus_data,
 from get_data import (
     _build_name_map,
     _build_slot_display_name_map,
+    _build_slot_rarity_map,
     _build_template_slot_map,
     _resolve_leader_slot_ids,
     _resolve_template_display_names,
@@ -230,6 +231,7 @@ def _ensure_manager_name_context() -> dict:
     ctx: dict = {
         "template_map_en":  _build_template_slot_map(cb_en),
         "slot_name_map_en": _build_slot_display_name_map(cb_en),
+        "slot_rarity_map":  _build_slot_rarity_map(cb_en),
         "name_map_en":      _build_name_map(cb_en),
     }
     if OUTPUT_LANG != "en":
@@ -257,7 +259,7 @@ def _resolve_manager_display_name(manager: dict) -> str:
         token = template_id.split(":", 1)[-1].lower().strip()
 
     slot_ids, _ = _resolve_leader_slot_ids(
-        manager, ctx["name_map_en"], ctx["template_map_en"]
+        manager, ctx["name_map_en"], ctx["template_map_en"], ctx["slot_rarity_map"]
     )
     if slot_ids:
         for slot_id in slot_ids:
