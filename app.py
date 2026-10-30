@@ -63,7 +63,15 @@ def _build_page_slot_index(data: dict) -> dict:
                             inv_ids.append(p["slot_id"])
                 else:
                     inv_ids.append(slot["slot_id"])
-                slots.append({"col": slot["slot_id"], "inv": inv_ids, "rarity": slot.get("rarity_css", ""), "name": slot.get("name", "").lower()})
+                slots.append({
+                    "col": slot["slot_id"],
+                    "inv": inv_ids,
+                    "rarity": slot.get("rarity_css", ""),
+                    "name": slot.get("name", "").lower(),
+                    "inventory_keep_count": slot.get("inventory_keep_count", 1),
+                    "evolution_paths": slot.get("evolution_paths", []),
+                    "max_strength": slot["max_strength"],
+                })
         result[page_id] = slots
     return result
 

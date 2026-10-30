@@ -42,6 +42,14 @@ _EFORT_RARITY_MAP: dict[str, str] = {
 }
 _RARITY_RE = re.compile(r'\.(C|UC|R|VR|SR)\.(?:\w+\.)?T\d+$', re.IGNORECASE)
 
+MAX_RULES_BY_RARITY: dict[str, tuple[int, int]] = {
+    "C": (2, 20),
+    "UC": (3, 30),
+    "R": (4, 40),
+    "VR": (5, 50),
+    "SR": (5, 50),
+}
+
 
 def _parse_rarity(slot_key: str, lang: str = "en") -> tuple[str, str]:
     """Extract (label, css_class) from a slot key, e.g. 'DID.X.Basic.SR.T01' → ('Epic', 'rarity-sr')."""
@@ -831,12 +839,27 @@ def get_collection_book(lang: str = "en") -> dict:
                 if not name:
                     name = rarity_label or slot_key
 
+                evolution_paths = sorted({
+                    match.group(1).lower()
+                    for item in allowed
+                    if (match := re.search(
+                        r"/SID_[^/]*_(Ore|Crystal)_T\d+\.",
+                        item.get("AssetPathName", ""),
+                        re.IGNORECASE,
+                    ))
+                })
+                required_tier, required_level = MAX_RULES_BY_RARITY.get(
+                    rarity_css.removeprefix("rarity-").upper(), (5, 50)
+                )
                 slot_entry: dict = {
                     "slot_id": slot_key,
                     "name": name,
                     "icon_url": icon_url,
                     "rarity_label": rarity_label,
                     "rarity_css": rarity_css,
+                    "inventory_keep_count": max(1, len(evolution_paths)),
+                    "evolution_paths": evolution_paths,
+                    "max_strength": {"tier": required_tier, "level": required_level},
                 }
 
                 # Expand generic lead slots (pagePeople_Leads) into gender × personality variants

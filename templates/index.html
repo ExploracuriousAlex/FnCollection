@@ -9,6 +9,13 @@
 </head>
 <body>
 
+{% macro inventory_strength(slot_id, collection_id) -%}
+  <label class="item-check item-check-inv-max" title="Max Strength in Inventory">
+    <input type="checkbox" class="check-inv-max" data-id="{{ slot_id }}" data-col-id="{{ collection_id }}" aria-label="Max Strength in Inventory" disabled>
+    <span class="check-icon" aria-hidden="true">⚡</span>
+  </label>
+{%- endmacro %}
+
 <div class="app-layout">
 
   <!-- ── Sidebar ──────────────────────────────────────────── -->
@@ -26,15 +33,14 @@
       <div class="accordion accordion-flush" id="catAccordion">
         {% for cat in data.categories %}
           {% if cat.pages %}
-          {% set is_active_cat = current_page and current_page.category_id == cat.id %}
           <div class="accordion-item border-0 sidebar-cat-item">
             <h2 class="accordion-header">
               <button
-                class="accordion-button sidebar-cat-btn {{ '' if is_active_cat else 'collapsed' }}"
+                class="accordion-button sidebar-cat-btn"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#cat{{ loop.index }}"
-                aria-expanded="{{ 'true' if is_active_cat else 'false' }}"
+                aria-expanded="true"
               >
                 {{ cat.name }}
                 <span class="cat-count ms-auto me-2">{{ cat.pages | sum(attribute='slot_count') }}</span>
@@ -42,8 +48,7 @@
             </h2>
             <div
               id="cat{{ loop.index }}"
-              class="accordion-collapse collapse {{ 'show' if is_active_cat else '' }}"
-              data-bs-parent="#catAccordion"
+              class="accordion-collapse collapse show"
             >
               <div class="accordion-body p-0">
                 {% for page in cat.pages %}
@@ -73,18 +78,24 @@
             <div class="d-flex gap-2">
               <input id="search-slots" class="search-input" type="search" placeholder="Search…" autocomplete="off">
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
               <button id="filter-col" class="filter-btn" type="button" title="Show only items not yet in the Collection Book">
                 📖 Not in Collection Book
               </button>
               <button id="filter-max" class="filter-btn" type="button" title="Show only items not at max strength">
-                ⭐ Not Max Strength
+                ⭐ Not Max Col Strenght
+              </button>
+              <button id="filter-inv-max" class="filter-btn" type="button" title="Show only items without maximum inventory strength for every possible weapon evolution path">
+                ⚡ Not Max Inv Strenght
               </button>
               <button id="filter-inv" class="filter-btn" type="button" title="Show only items missing from inventory">
                 📰 Not in Inventory
               </button>
               <button id="filter-dup" class="filter-btn" type="button" title="Show only items with 2 or more in inventory">
                 📦 Duplicates
+              </button>
+              <button id="filter-superfluous" class="filter-btn" type="button" title="Show only collected items with surplus inventory copies, keeping one copy per possible weapon evolution path">
+                ♻ Superfluous
               </button>
             </div>
             <div class="d-flex gap-1">
@@ -269,8 +280,11 @@
                             </div>
                           {% endif %}
                           <div class="item-checks">
-                            <div class="inv-count" data-id="{{ slot.slot_id }}" title="">
-                              <span class="qty-val">0</span>
+                            <div class="inventory-status">
+                              {{ inventory_strength(slot.slot_id, slot.slot_id) }}
+                              <div class="inv-count" data-id="{{ slot.slot_id }}" title="">
+                                <span class="qty-val">0</span>
+                              </div>
                             </div>
                             <label class="item-check" title="In Collection Book">
                               <input type="checkbox" class="check-col" data-id="{{ slot.slot_id }}" disabled>
@@ -308,12 +322,15 @@
   let _state = { inv: {}, col: {}, col_max: {}, inv_details: {} };
   let _filterCol = localStorage.getItem('filter-col') === '1';
   let _filterMax = localStorage.getItem('filter-max') === '1';
+  let _filterInvMax = localStorage.getItem('filter-inv-max') === '1';
   let _filterInv = localStorage.getItem('filter-inv') === '1';
   let _filterDup = localStorage.getItem('filter-dup') === '1';
+  let _filterSuperfluous = localStorage.getItem('filter-superfluous') === '1';
   let _hiddenRarities = new Set(JSON.parse(localStorage.getItem('filter-hidden-rarities') || '[]'));
   let _searchQuery = localStorage.getItem('filter-search') || '';
 
   const _pageSlots = JSON.parse(document.getElementById('page-slots-json').textContent || '{}');
+  const _slotsById = Object.fromEntries(Object.values(_pageSlots).flat().map(slot => [slot.col, slot]));
   const _lang = JSON.parse(document.getElementById('current-lang-json').textContent || '"en"');
   const _materialLabels = JSON.parse(document.getElementById('material-labels-json').textContent || '{}');
 
@@ -361,6 +378,32 @@
     return false;
   }
 
+  function isSuperfluous(slot) {
+    if (!slot) return false;
+    return slot.inv.some(id =>
+      (_state.col[slot.col] || _state.col[id]) &&
+      (_state.inv[id] || 0) > (slot.inventory_keep_count || 1)
+    );
+  }
+
+  function isMaxInInventory(slot) {
+    if (!slot || !slot.max_strength) return false;
+    const required = slot.max_strength;
+    return slot.inv.length > 0 && slot.inv.every(id => {
+      if (!(_state.inv[id] > 0)) return false;
+      const details = _state.inv_details[id] || [];
+      const maxCopies = details.filter(variant =>
+        variant.count > 0 && variant.tier >= required.tier && variant.pl >= required.level
+      );
+      if (!slot.evolution_paths.length) return maxCopies.length > 0;
+      return slot.evolution_paths.every(path => maxCopies.some(variant => {
+        const material = (variant.material || '').toLowerCase();
+        if (path === 'crystal') return ['shadowshard', 'sunbeam'].includes(material);
+        return ['copper', 'silver', 'malachite', 'obsidian', 'brightcore'].includes(material);
+      }));
+    });
+  }
+
   function isMaxInCollection(card) {
     const cb = card.querySelector('.check-col-max');
     if (!cb) return false;
@@ -397,8 +440,16 @@
         let hide = false;
         if (_filterCol && card && isInCollection(card)) hide = true;
         if (_filterMax && card && isMaxInCollection(card)) hide = true;
+        if (_filterInvMax && card) {
+          const collectionId = card.querySelector('.check-col')?.dataset.id;
+          if (isMaxInInventory(_slotsById[collectionId])) hide = true;
+        }
         if (_filterInv && card && isFullyInInventory(card)) hide = true;
         if (_filterDup && card && !hasDuplicates(card)) hide = true;
+        if (_filterSuperfluous && card) {
+          const collectionId = card.querySelector('.check-col')?.dataset.id;
+          if (!isSuperfluous(_slotsById[collectionId])) hide = true;
+        }
         if (!hide && card) {
           for (const rc of _hiddenRarities) {
             if (card.classList.contains(rc)) { hide = true; break; }
@@ -432,6 +483,7 @@
           const isMax = _state.col_max[slot.col] || slot.inv.some(id => !!_state.col_max[id]);
           if (isMax) hide = true;
         }
+        if (_filterInvMax && isMaxInInventory(slot)) hide = true;
         if (_filterInv) {
           const allCovered = slot.inv.every(id => (_state.inv[id] || 0) > 0);
           if (allCovered) hide = true;
@@ -440,6 +492,7 @@
           const anyDuplicate = slot.inv.some(id => (_state.inv[id] || 0) >= 2);
           if (!anyDuplicate) hide = true;
         }
+        if (_filterSuperfluous && !isSuperfluous(slot)) hide = true;
         if (!hide && slot.rarity && _hiddenRarities.has(slot.rarity)) hide = true;
         if (!hide && _searchQuery && !slot.name.includes(_searchQuery)) hide = true;
         if (!hide) visibleCount++;
@@ -477,6 +530,12 @@
       el.querySelector('.qty-val').textContent = count;
       el.classList.toggle('has-qty', count > 0);
       el.title = formatInvDetails(id, count);
+    });
+    document.querySelectorAll('.check-inv-max').forEach(cb => {
+      const slot = _slotsById[cb.dataset.colId];
+      const checked = !!slot && isMaxInInventory({ ...slot, inv: [cb.dataset.id] });
+      cb.checked = checked;
+      cb.closest('.item-check').classList.toggle('is-checked', checked);
     });
     // Collection checkboxes (col)
     document.querySelectorAll('.check-col').forEach(cb => {
@@ -533,6 +592,16 @@
     const btnCol = document.getElementById('filter-col');
     const btnMax = document.getElementById('filter-max');
     const btnInv = document.getElementById('filter-inv');
+    const btnInvMax = document.getElementById('filter-inv-max');
+    if (btnInvMax) {
+      btnInvMax.classList.toggle('active', _filterInvMax);
+      btnInvMax.addEventListener('click', () => {
+        _filterInvMax = !_filterInvMax;
+        localStorage.setItem('filter-inv-max', _filterInvMax ? '1' : '0');
+        btnInvMax.classList.toggle('active', _filterInvMax);
+        applyFilters();
+      });
+    }
     if (btnCol) {
       btnCol.classList.toggle('active', _filterCol);
       btnCol.addEventListener('click', () => {
@@ -567,6 +636,17 @@
         _filterDup = !_filterDup;
         localStorage.setItem('filter-dup', _filterDup ? '1' : '0');
         btnDup.classList.toggle('active', _filterDup);
+        applyFilters();
+      });
+    }
+
+    const btnSuperfluous = document.getElementById('filter-superfluous');
+    if (btnSuperfluous) {
+      btnSuperfluous.classList.toggle('active', _filterSuperfluous);
+      btnSuperfluous.addEventListener('click', () => {
+        _filterSuperfluous = !_filterSuperfluous;
+        localStorage.setItem('filter-superfluous', _filterSuperfluous ? '1' : '0');
+        btnSuperfluous.classList.toggle('active', _filterSuperfluous);
         applyFilters();
       });
     }

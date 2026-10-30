@@ -25,6 +25,7 @@ from rich import print as rprint
 import epic_api
 import state
 from data_loader import get_collection_book, lookup_item_definition_name
+from data_loader import MAX_RULES_BY_RARITY as _MAX_RULES_BY_RARITY
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -62,14 +63,6 @@ _MATERIAL_TOKENS: list[tuple[str, str]] = [
     ("silver", "Silver"),
     ("copper", "Copper"),
 ]
-
-_MAX_RULES_BY_RARITY: dict[str, tuple[int, int]] = {
-    "C": (2, 20),
-    "UC": (3, 30),
-    "R": (4, 40),
-    "VR": (5, 50),
-    "SR": (5, 50),
-}
 
 _INVENTORY_PROFILE_IDS = ("campaign",)
 _COLLECTION_PROFILE_IDS = ("collection_book_people0", "collection_book_schematics0")

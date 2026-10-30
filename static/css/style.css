@@ -268,9 +268,20 @@ html, body {
 /* ── Item checkboxes ──────────────────────────────────────── */
 .item-checks {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.45rem;
   align-items: center;
+}
+
+.inventory-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.item-check-inv-max {
+  flex-shrink: 0;
 }
 
 /* ── Quantity stepper ─────────────────────────────────────── */
